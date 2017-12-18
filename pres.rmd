@@ -1,0 +1,529 @@
+---
+title: "InveRness RUG - Intro to ggplot2"
+author: "John MacKintosh"  
+date: "16 May 2016"
+twitter: "@HighlandDataSci"
+github: <https://github.com/johnmackintosh>
+output: 
+  ioslides_presentation: 
+    smaller: yes
+    widescreen: yes
+---
+## Aims:
+Practical rather than theoretical  
+
+- ggplot today
+- grammar of graphics - the very basics
+- exploratory plots- scatter, bar, histogram, line
+- more advanced
+- some work based examples
+- ggplot, the hadleyverse and everything else gg related  
+
+## ggplot2:
+
+<http://docs.ggplot2.org/current/>  
+
+- Not part of standard R packages - needs to be installed
+- based on ["The Grammar of Graphics"](https://www.amazon.co.uk/Grammar-Graphics-Statistics-Computing/dp/0387245448)   
+- Package Authors : Hadley Wickham, Winston Chang  
+- Version 2 released late 2015  
+- Last major release - but users now actively building  [extensions](<https://www.ggplot2-exts.org/>)  
+- In some cases [not everyone loves it](http://simplystatistics.org/2016/02/11/why-i-dont-use-ggplot2/) 
+- but [most do!](http://varianceexplained.org/r/why-I-use-ggplot2/)  
+
+## The basics:  
+
+- data must be a [data frame](http://www.r-tutor.com/r-introduction/data-frame)  
+- all plots have same underlying structure  
+- build plots in layers
+- can plot data from more than one data frame in same plot
+- advanced plots build on basics
+  
+##ggplot2 - plot components  
+
+ggplot(data,aes(x=x,y=y))+geom_XXX()
+
+- data: what we want to visualise  
+- aesthetics: x & y variables, but also applies to:  
+- colour, size, shape . 
+- geoms: the objects we draw e.g. bars,lines, points etc  
+- geoms inherit colour etc from the aesthetics - unless over-written  
+- data values are mapped to the aesthetics
+
+## Sounds complicated - why use ggplot2?
+
+The best answer is to try it and see:  
+- default plots look good straight out of the box  
+- it tries to pick suitable scales, automatic legends etc where appropriate  
+- a common underlying approach for each chart type    
+- base R and lattice are also complicated - you need to pick one, pick the best  
+- flexibility and scope   
+- carryover to over datavis software e.g. Tableau
+
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(ggthemes) # change the appearance to mimic other packages/ data viz outputs
+library(tidyr) # data wrangling
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Packages and datasets required:
+library(ggplot2)  
+#library(ggExtra) # extra functionality and useful code snippets  
+library(ggthemes) # change appearance  
+#library(dplyr) # data wrangling   
+library(tidyr) # data wrangling  
+#library(lubridate) # for easy date manipulation  
+
+[code for today](<https://github.com/johnmackintosh/ggplotdemo>)
+
+#Scatter plot
+
+## Generate test data
+
+```{r,echo=TRUE,eval=TRUE}
+set.seed(11)
+df.test <- data.frame(x = rnorm(50, mean=5, sd=2),
+                           y = rnorm(50, mean=5, sd=1))                          
+```
+
+## 
+```{r,echo=TRUE,eval=TRUE}
+ggplot(data=df.test, aes(x, y)) + 
+  geom_point()
+```
+
+##Change colour & size of points
+
+```{r,echo=TRUE,eval=TRUE}
+
+ggplot(data=df.test, aes(x=x, y=y)) +
+  geom_point(color="navy", size=4)
+```
+
+## Create a generic scatter plot function
+```{r, eval=TRUE,echo=TRUE}
+scatter <- function(data, x, y,...) {
+  ggplot(data=data,aes(x=x,y=y))+geom_point(...)
+}
+
+#create new dummy dataframe
+data2 <- data.frame(x = rnorm(100, mean=20, sd=2),
+                   y = rnorm(100, mean=40, sd=1))
+```
+
+## Use function:
+
+
+```{r,eval=TRUE,echo=TRUE}
+scatter(data2,aes(x,y))
+```
+
+
+# Bar Chart
+
+##
+```{r,echo=TRUE,eval=TRUE}
+# Create dummy dataset
+df.dummy_data <- data.frame(cat_var = c("A","B","C","D","E"),
+                            num_var = c(5,2,9,4,5)
+)
+```
+
+
+##
+
+```{r,echo=TRUE,eval=TRUE}
+ggplot(data=df.dummy_data, aes(x=cat_var, y=num_var)) +
+  geom_bar(stat="identity") #map bar to values in data
+```
+
+
+## Default behaviour is to count
+
+```{r,echo=TRUE,eval=TRUE}
+g <- ggplot(mpg, aes(class))
+# Number of cars in each class:
+g + geom_bar()
+```
+
+
+##
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(data=diamonds, aes(x=cut)) +
+  geom_bar(fill="firebrick") # fill in the bars
+p
+```
+
+##
+```{r,echo=TRUE,eval=TRUE}
+p<-p + coord_flip() # flip the axis
+p
+```
+
+
+# Histogram
+
+## dummy data
+
+```{r,eval=TRUE,echo=TRUE}
+set.seed(11)
+df.hist_data <- data.frame( x_var = rnorm(2000) )
+```
+
+
+##
+```{r,eval=TRUE,echo=TRUE}
+ggplot(data=df.hist_data, aes(x=x_var)) +
+  geom_histogram(binwidth=0.1,fill="dark red",colour="white")
+```
+
+# Line Charts
+
+## Get the data:
+```{r,echo=TRUE,eval=TRUE}
+data<-list(fdeaths,mdeaths,ldeaths) #time series data- needs prep
+data<-as.data.frame(data)
+names(data)[1:3]<- c("fdeaths","mdeaths","ldeaths")
+data$fdeaths<-as.numeric(data$fdeaths)
+data$mdeaths<-as.numeric(data$mdeaths)
+data$ldeaths<-as.numeric(data$ldeaths)
+startdate<-as.Date('1974-1-1')
+date<-seq.Date(startdate,by='month',length.out = 72)
+data$date<-date
+
+```
+
+##
+
+```{r,echo=TRUE,eval=TRUE}
+ggplot(data,aes(date,fdeaths))+geom_line()
+```
+
+
+## More data conversion: wide to long
+```{r,echo=TRUE,eval=TRUE}
+library(tidyr)
+data2<-gather(data,type,deaths,-date)
+head(data2,4)
+tail(data2,4)
+```
+
+##
+
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(data2,aes(date,deaths))+
+  geom_line()+geom_point()+facet_wrap(~type,nrow = 3)
+p
+
+```
+
+## Re-process dataframe
+
+```{r,echo=TRUE,eval=TRUE}
+
+#set type as factor and re-order 
+data2$type<-as.factor(data2$type)
+data2$type =factor(data2$type,
+                  levels(data2$type)[c(1,3,2)],
+                  labels=c("female","male","combined"))
+```
+
+##
+
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(data2,aes(date,deaths,colour=type))+geom_line()+geom_point()
+p
+
+
+```
+
+##
+
+```{r,echo=TRUE,eval=FALSE}
+p<-ggplot(data2,aes(date,deaths))+geom_line()+
+  geom_point()+scale_x_date(date_breaks="3 months",date_labels="%b-%y")+
+  theme(axis.text.x = element_text(angle = 90))+
+  theme(legend.position = "bottom")+
+  facet_wrap(~type,nrow = 3)+
+  ggtitle("Monthly UK Lung Deaths,1974-1979, by gender and combined")+
+labs(x="", y="Deaths")
+p
+```
+
+## Better!
+```{r,echo=FALSE,eval=TRUE}
+p<-ggplot(data2,aes(date,deaths))+geom_line()+
+  geom_point()+scale_x_date(date_breaks="3 months",date_labels="%b-%y")+
+  theme(axis.text.x = element_text(angle = 90))+
+  theme(legend.position = "bottom")+
+  facet_wrap(~type,nrow = 3)+
+  ggtitle("Monthly UK Lung Deaths, by gender and combined")+
+labs(x="", y="Deaths")
+p
+```
+
+#Themes
+##change the theme
+
+```{r,eval=TRUE,echo=TRUE}
+p<-p+theme_minimal(base_size = 10)+
+  theme(axis.text.x = element_text(angle = 90))
+p
+
+```
+
+
+
+## From ggthemes package - Economist
+```{r,echo=TRUE,eval=TRUE}
+p<-p+theme_economist(base_size = 10)+
+ theme(axis.text.x = element_text(angle = 90)) 
+  
+p
+```
+
+## Some more themes:
+-theme_stata()  :stats package theme   
+-theme_fivethirtyeight()  : nate silver & co website 
+-theme_wsj()    :Wall Street Journal  
+-theme_few ()   :inspired by work of data vis guru Stephen Few 
+-theme_gdocs() :google docs  
+
+
+
+
+# More on aesthetics..
+
+##
+```{r,echo=TRUE,eval=TRUE}
+ggplot(iris,aes(Sepal.Length,Petal.Length))+geom_point()
+```
+
+
+## Map Species  
+- here the colour mapping goes inside the aes()brackets  
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(iris,aes(Sepal.Length,Petal.Length,colour= Species))+geom_point()
+ p
+
+```
+
+
+## Can add aesthetics to the geom instead:
+
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(iris,aes(Sepal.Length,Petal.Length))+
+  geom_point(aes(colour= Species,size=Sepal.Width))
+p
+```
+
+
+## Make the points more transparent
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(iris,aes(Sepal.Length,Petal.Length))+
+  geom_point(aes(colour= Species,size=Sepal.Width),alpha=0.5)
+p
+```
+
+
+## Add line of best fit
+```{r,echo=TRUE,eval=TRUE}
+p<-ggplot(iris,aes(Sepal.Length,Petal.Length))+geom_point()
+p<- p + geom_smooth()
+p
+```
+
+
+## Individual plots
+
+```{r,echo=TRUE,eval=TRUE}
+ p<- p +facet_grid(.~Species)
+p
+```
+
+
+## What you learned
+- aesthetics:
+define the x,y coordinates  
+
+but also,
+  
+- size  
+- shape
+- colour 
+
+Results in ability to create more complex plots
+
+
+
+## Things to bear in mind  
+- aesthetics applied to the geom layer only apply to that geom 
+- aesthetics added in the initial aes(x,y) call apply to all geoms,unless over-written
+```{r,echo=TRUE,eval=FALSE}
+geom_point(aes(colour=Species))
+```
+produces similar plot to:
+
+```{r,eval=FALSE,echo=TRUE}
+aes(Sepal.Length,Petal.Length,colour= Species))+geom_point()
+```
+
+```{r,eval=FALSE,echo=TRUE}
+geom_point(colour="blue")
+```
+will colour all points blue, but:
+```{r,echo=TRUE,eval=FALSE}
+geom_point(aes(colour="blue"))
+```
+
+might not work as intended
+
+
+# Boxplots
+##
+```{r,eval=TRUE,echo=TRUE}
+ggplot(iris,aes(x=Species,y=Sepal.Length))+geom_boxplot()
+```
+
+
+## Narrower
+```{r,eval=TRUE,echo=TRUE}
+ggplot(iris,aes(x=Species,y=Sepal.Length))+
+geom_boxplot(width=0.2)
+```
+
+## Alternative
+
+```{r,eval=TRUE,echo=TRUE}
+ggplot(iris,aes(x=Species,y=Sepal.Length,colour=Species))+
+geom_boxplot(width=0.2)+
+geom_jitter(position=position_jitter(0.1),alpha=0.5)+
+theme_classic()
+```
+
+#Other packages to note
+
+## ggplot2 plays well with:
+- dplyr # peform sql operations and more   
+- tidyr # reshape data  
+- broom # turn objects from other packages and code into data frames  
+- RColorBrewer # nice colour palettes  
+- lubridate #  working with dates  
+
+## Other useful packages:
+- ggGally :  survival curves  
+- ggmap : mapping e.g. <http://spatial.ly/2015/03/mapping-flows/>   
+- ggthemes  
+- ggvis : interactive Grammar of Graphics  
+- ggExtra : extra ggplots and useful functions:    
+- cowplot - clean plots using ggplot -saves coding time  
+
+- RODBC:  connect to databases for data import/export
+
+
+## Closing examples:
+
+```{r,eval=FALSE,echo=TRUE}
+g <- ggplot(diamonds, aes(x=carat, y=price, color=cut)) + geom_point(alpha=0.3) + 
+labs(title="Diamonds", x="Carat", y="Price")
+print(g)
+
+```
+
+##
+
+```{r,eval=TRUE,echo=FALSE}
+g <- ggplot(diamonds, aes(x=carat, y=price, color=cut)) + geom_point(alpha=0.3) + 
+labs(title="Diamonds", x="Carat", y="Price")
+print(g)
+```
+
+
+
+
+## Add titles and format
+```{r,echo=TRUE,eval=FALSE}
+g1<-g+theme(plot.title=element_text(size=15, face="bold"), 
+                  axis.text.x=element_text(size=8),
+                  axis.text.y=element_text(size=8),
+                  axis.title.x=element_text(size=10),
+                  axis.title.y=element_text(size=10)) + 
+  scale_color_discrete(name="Cut of diamonds")  
+print(g1)
+```
+
+
+## Results
+```{r,eval=TRUE,echo=FALSE}
+g1<-g+theme(plot.title=element_text(size=15, face="bold"), 
+                  axis.text.x=element_text(size=8),
+                  axis.text.y=element_text(size=8),
+                  axis.title.x=element_text(size=10),
+                  axis.title.y=element_text(size=10)) + 
+  scale_color_discrete(name="Cut of diamonds")  
+print(g1)
+```
+
+
+
+
+## Facet
+```{r,echo=TRUE,eval=FALSE}
+g2<-g1 + facet_grid(color ~ cut)
+g2
+```
+
+
+## Results
+
+
+```{r,echo=FALSE,eval=TRUE}
+g2<-g1 + facet_grid(color ~ cut)
+g2
+```
+
+
+## coord_cartesian
+zooms in, doesn't delete or distort
+```{r,echo=TRUE,eval=FALSE}
+g3<- g2 + coord_cartesian(ylim=c(0,5000))
+g3
+```
+
+##
+
+
+```{r,echo=FALSE,eval=TRUE}
+g3<- g2 + coord_cartesian(ylim=c(0,5000))
+g3
+```
+
+
+## dplyr & ggplot = awesome:
+```{r,out.width=1000,out.height=568}
+knitr::include_graphics(" ggplotdemo/temp8.png ")
+```
+
+
+
+Temperature by hour, by day, by month over 2 years, from specified weather station
+
+## Help?
+- Help : <http://stackoverflow.com>   
+- Subscribe : <http://r-bloggers.com> 
+
+
+# Thanks for listening!
+John MacKintosh   
+dataguy.jm@gmail.com   
+@HighlandDataSci  
+<https://github.com/johnmackintosh>  
+<http://johnmackintosh.com> 
+
+
+
+
+
+
